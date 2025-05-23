@@ -60,3 +60,52 @@ repository.
 
 Sogou Input Method is a product of Sogou Inc. This tap is not officially
 affiliated with Sogou Inc.
+
+## Troubleshooting
+
+### GitHub Actions Common Issues
+
+#### Issue 1: `head: |: No such file or directory` Error
+
+**Problem:**  
+When using `gh workflow run` or `gh run list` commands, you may encounter
+"head: |: No such file or directory" or "head: cat: No such file or directory"
+errors.
+
+**Solution:**  
+Set the GitHub CLI pager to `cat`:
+
+```bash
+export PAGER=cat && gh workflow run update-sogou-input.yml
+```
+
+**Reason:**  
+By default, GitHub CLI uses `less` as the pager, which can cause issues in
+certain environments. Setting the pager to `cat` avoids this problem.
+
+#### Issue 2: `Resource not accessible by integration` Error
+
+**Problem:**  
+GitHub Actions workflow fails with "Resource not accessible by integration"
+error when trying to create releases or push changes.
+
+**Solution:**  
+Modify the repository's workflow permissions to allow write access:
+
+```bash
+gh api -X PUT repos/:owner/:repo/actions/permissions/workflow \
+  -f default_workflow_permissions='write'
+```
+
+**Reason:**  
+By default, GitHub Actions workflows don't have sufficient permissions to
+create releases or push changes. Modifying the repository's workflow
+permissions grants write access to workflows.
+
+**Verify Permissions:**  
+
+```bash
+gh api repos/:owner/:repo/actions/permissions/workflow --jq '.'
+```
+
+The output should include `"default_workflow_permissions": "write"`.

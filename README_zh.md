@@ -53,3 +53,51 @@ GitHub Action 工作流每天运行以：
 ## 免责声明
 
 搜狗输入法是搜狗公司的产品。此 tap 与搜狗公司没有官方关联。
+
+## 故障排除
+
+### GitHub Actions 常见问题
+
+#### 问题一：`head: |: No such file or directory` 错误
+
+**问题描述：**  
+使用 `gh workflow run` 或 `gh run list` 等命令时，可能会遇到
+"head: |: No such file or directory" 或 "head: cat: No such file or directory"
+错误。
+
+**解决方案：**  
+将 GitHub CLI 的分页器设置为 `cat`：
+
+```bash
+export PAGER=cat && gh workflow run update-sogou-input.yml
+```
+
+**原因：**  
+默认情况下，GitHub CLI 使用 `less` 作为分页器，但在某些环境中可能会导致问题。
+将分页器设置为 `cat` 可以避免这个问题。
+
+#### 问题二：`Resource not accessible by integration` 错误
+
+**问题描述：**  
+GitHub Actions 工作流运行时出现 "Resource not accessible by integration" 错误，
+无法创建发布版本或推送更改。
+
+**解决方案：**  
+使用 GitHub CLI 修改仓库的工作流权限，允许工作流写入内容：
+
+```bash
+gh api -X PUT repos/:owner/:repo/actions/permissions/workflow \
+  -f default_workflow_permissions='write'
+```
+
+**原因：**  
+默认情况下，GitHub Actions 工作流没有足够的权限来创建发布版本或推送更改。
+通过修改仓库的工作流权限，可以授予工作流写入内容的权限。
+
+**验证权限设置：**  
+
+```bash
+gh api repos/:owner/:repo/actions/permissions/workflow --jq '.'
+```
+
+输出应该包含 `"default_workflow_permissions": "write"`。
