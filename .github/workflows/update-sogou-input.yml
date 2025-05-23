@@ -1,0 +1,152 @@
+---
+name: Update Sogou Input
+
+on:
+  schedule:
+    - cron: "0 16 * * *" # Run every day at 16:00 UTC (00:00 Beijing Time)
+  workflow_dispatch: {} # Allow manual triggering
+
+jobs:
+  update-sogou-input:
+    runs-on: macos-latest
+    env:
+      SKIP_RELEASE: false
+      VERSION: "0.0.0"
+      SHA256: "placeholder"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download latest Sogou Input
+        run: |
+          curl -L "https://pinyin.sogou.com/mac/softdown.php" -o sogou_input_temp.zip
+          unzip -q sogou_input_temp.zip -d extracted
+          APP_PATH=$(find extracted -name "*.app" -type d | head -n 1)
+
+          if [ -z "$APP_PATH" ]; then
+            echo "No Sogou app found in extracted directory"
+            exit 1
+          fi
+
+          # Extract version using plist instead of defaults command
+          VERSION=$(plutil -p "$APP_PATH/Contents/Info.plist" | \
+            grep CFBundleShortVersionString | awk -F'"' '{print $4}')
+          SHA256=$(shasum -a 256 sogou_input_temp.zip | awk '{print $1}')
+
+          # Rename the downloaded file to include version number
+          mv sogou_input_temp.zip "sogou_input_v${VERSION}.zip"
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SHA256=$SHA256" >> $GITHUB_ENV
+
+          # Check if this version already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/v$VERSION"; then
+            echo "Version $VERSION already exists, skipping release"
+            echo "SKIP_RELEASE=true" >> $GITHUB_ENV
+          else
+            echo "SKIP_RELEASE=false" >> $GITHUB_ENV
+          fi
+
+          # Verify env var is set
+          echo "SKIP_RELEASE value: $SKIP_RELEASE"
+
+      - name: Create release
+        if: ${{ env.SKIP_RELEASE != 'true' }}
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Sogou Input v${{ env.VERSION }}
+          body: |
+            # Sogou Input Method v${{ env.VERSION }}
+
+            Official website: https://pinyin.sogou.com/mac/
+            Download link: https://pinyin.sogou.com/mac/softdown.php
+
+            SHA256: ${{ env.SHA256 }}
+
+            ## System Requirements
+            - macOS 10.14 (Mojave) or later
+            - Intel and Apple Silicon (M1/M2/M3) Mac supported
+
+            This is an automated release of the Sogou Input Method for macOS.
+
+            ## Installation
+            ```
+            brew install --cask recronin/sogou-input/sogou-input
+            ```
+
+            > **Note:** Please download the `sogou_input_v${{ env.VERSION }}.zip`
+            > file above. Please DO NOT use the auto-generated "Source code" files
+            > at the bottom.
+          files: sogou_input_v${{ env.VERSION }}.zip
+          generate_release_notes: false
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Cask file
+        if: ${{ env.SKIP_RELEASE != 'true' }}
+        run: |
+          # Get repository info
+          REPO_OWNER=$(echo $GITHUB_REPOSITORY | cut -d '/' -f 1)
+          REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d '/' -f 2)
+
+          # Create file with individual echo commands
+          echo 'cask "sogou-input" do' > Casks/sogou-input.rb
+          echo "  version \"${VERSION}\"" >> Casks/sogou-input.rb
+          echo "  sha256 \"${SHA256}\"" >> Casks/sogou-input.rb
+          echo "" >> Casks/sogou-input.rb
+
+          # Create URL in parts to avoid long lines
+          echo -n '  url "https://github.com/' >> Casks/sogou-input.rb
+          echo -n "${REPO_OWNER}/${REPO_NAME}" >> Casks/sogou-input.rb
+          echo -n '/releases/download/' >> Casks/sogou-input.rb
+          echo 'v#{version}/sogou_input_v#{version}.zip"' >> Casks/sogou-input.rb
+
+          echo "  name \"Sogou Input Method\"" >> Casks/sogou-input.rb
+          echo "  desc \"Chinese input method\"" >> Casks/sogou-input.rb
+          echo "  homepage \"https://pinyin.sogou.com/mac/\"" >> Casks/sogou-input.rb
+          echo "" >> Casks/sogou-input.rb
+          echo "  livecheck do" >> Casks/sogou-input.rb
+
+          # Break long URL into parts
+          echo -n "    url \"https://github.com/" >> Casks/sogou-input.rb
+          echo -n "${REPO_OWNER}/" >> Casks/sogou-input.rb
+          echo "${REPO_NAME}/releases\"" >> Casks/sogou-input.rb
+
+          echo "    regex(/v?(\\d+(?:\\.\\d+)+)/i)" >> Casks/sogou-input.rb
+          echo "  end" >> Casks/sogou-input.rb
+          echo "" >> Casks/sogou-input.rb
+          echo "  auto_updates true" >> Casks/sogou-input.rb
+          echo "  depends_on macos: \">= :mojave\"" >> Casks/sogou-input.rb
+          echo "  depends_on arch: [:x86_64, :arm64]" >> Casks/sogou-input.rb
+          echo "  stage_only true" >> Casks/sogou-input.rb
+          echo "" >> Casks/sogou-input.rb
+          echo "  postflight do" >> Casks/sogou-input.rb
+
+          # Break long line into multiple parts
+          echo -n '    app_path = Dir[' >> Casks/sogou-input.rb
+          echo '"#{staged_path}/sogou*.app"].first' >> Casks/sogou-input.rb
+
+          echo "    if app_path.nil?" >> Casks/sogou-input.rb
+
+          # Break long line into multiple parts
+          echo -n '      puts ' >> Casks/sogou-input.rb
+          echo '"No Sogou app found in #{staged_path}"' >> Casks/sogou-input.rb
+
+          echo "    else" >> Casks/sogou-input.rb
+          echo "      system \"/usr/bin/open\", app_path" >> Casks/sogou-input.rb
+          echo "    end" >> Casks/sogou-input.rb
+          echo "  end" >> Casks/sogou-input.rb
+          echo "end" >> Casks/sogou-input.rb
+
+      - name: Commit and push changes
+        if: ${{ env.SKIP_RELEASE != 'true' }}
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Casks/sogou-input.rb
+          git commit -m "Update Sogou Input to v$VERSION"
+          git push

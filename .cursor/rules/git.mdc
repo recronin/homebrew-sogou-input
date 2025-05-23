@@ -1,0 +1,51 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Git Commit Rules
+
+## Enforce Git Hooks
+
+When using Git commands in this repository, always ensure that hooks are respected. **These rules apply in ALL circumstances without exception.**
+
+### Strictly Prohibited Commands
+
+- `git commit --no-verify` - **NEVER ALLOWED**
+- Any Git command with the `--no-verify` flag - **NEVER ALLOWED**
+- Temporarily disabling or modifying pre-commit hooks to bypass checks - **NEVER ALLOWED**
+
+### Strictly Prohibited Practices
+
+- Modifying linter configuration files (`.yamllint`, `.markdownlint.json`, etc.) to relax rules just to pass checks - **NEVER ALLOWED**
+- Deleting configuration files to avoid linting checks - **NEVER ALLOWED**
+- Creating temporary branches to bypass hook checks - **NEVER ALLOWED**
+- Any other technique that aims to circumvent the quality standards enforced by hooks - **NEVER ALLOWED**
+
+### Mandatory Practices
+
+- Always run `git commit` without the `--no-verify` flag
+- Fix all issues reported by pre-commit hooks before committing
+- If you encounter hook-related errors, fix the underlying issues rather than bypassing hooks
+- If hooks need to be modified, ensure they still perform the required quality checks
+- If configuration files need updating, discuss with the team and ensure changes maintain code quality
+
+### Enforcement
+
+- Violations of these rules will be treated as serious breaches of project standards
+- Automated tools will monitor compliance with these rules
+- Repeated violations may result in restricted repository access
+
+### No Exceptions
+
+There are **NO exceptions** to these rules, even for:
+- Initial commits
+- Emergency fixes
+- Temporary workarounds
+- Any other special circumstances
+
+### Rationale
+
+Pre-commit hooks are essential for maintaining code quality and consistency across the project. They ensure that all committed code meets the project's standards for style, formatting, and correctness.
+
+Bypassing these checks undermines the quality control process and can lead to inconsistent code in the repository. Configuration files are part of the project's quality control system and should not be modified simply to avoid fixing actual issues in the code.

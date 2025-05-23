@@ -1,0 +1,206 @@
+#!/bin/bash
+
+# Auto-pull latest changes
+# Save current changes
+git stash -q --keep-index
+
+# Pull latest changes
+git pull --rebase --autostash
+
+# Restore saved changes
+git stash pop -q 2>/dev/null || true
+
+# Part 0: Shell script check
+# Get all staged shell script files
+staged_shell_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(sh|bash)$|^\.githooks/")
+
+if [[ -n "$staged_shell_files" ]]; then
+  echo "Running shellcheck on staged shell script files..."
+  
+  # Check if shellcheck is installed
+  if ! command -v shellcheck &> /dev/null; then
+    echo "⚠️ shellcheck is not installed, attempting to install via Homebrew..."
+    if command -v brew &> /dev/null; then
+      if ! brew install shellcheck; then
+        echo "❌ Failed to install shellcheck, please install it manually before committing"
+        echo "You can install it by running 'brew install shellcheck'"
+        exit 1
+      fi
+    else
+      echo "❌ Homebrew not found, cannot install shellcheck"
+      echo "Please install Homebrew and run 'brew install shellcheck'"
+      exit 1
+    fi
+  fi
+  
+  # Run shellcheck on each shell script file
+  shellcheck_errors=0
+  shellcheck_output=""
+  
+  for file in $staged_shell_files; do
+    echo "Checking shell script: $file"
+    file_output=$(shellcheck -x "$file" 2>&1)
+    if ! shellcheck -x "$file" &> /dev/null; then
+      shellcheck_errors=$((shellcheck_errors+1))
+      shellcheck_output="$shellcheck_output\n$file_output"
+    fi
+  done
+  
+  if [ $shellcheck_errors -gt 0 ]; then
+    echo -e "$shellcheck_output"
+    echo "❌ Shell script check failed! Please fix the issues above before committing."
+    echo "Tip: shellcheck provides detailed error messages and suggestions for fixing shell script issues"
+    exit 1
+  fi
+  
+  echo "✅ Shell script check passed."
+fi
+
+# Part 1: brew style check
+# Get all staged .rb files
+staged_rb_files=$(git diff --cached --name-only --diff-filter=ACM | grep "\.rb$")
+
+if [[ -n "$staged_rb_files" ]]; then
+  echo "Running brew style check on staged Ruby files..."
+  
+  # Run brew style check without auto-fixing
+  brew_output=$(brew style "$staged_rb_files" 2>&1)
+  if ! brew style "$staged_rb_files" &> /dev/null; then
+    echo "$brew_output"
+    echo "❌ Style check failed! Please fix the style issues above before committing."
+    echo "Tip: You can run 'brew style --fix $staged_rb_files' to automatically fix some issues, then check the results."
+    exit 1
+  fi
+  
+  echo "✅ Style check passed."
+fi
+
+# Part 2: markdownlint check
+# Get all staged Markdown files (including MDC files)
+staged_md_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(md|markdown|mdc)$")
+
+if [[ -n "$staged_md_files" ]]; then
+  echo "Running markdownlint check on staged Markdown and MDC files..."
+  
+  # Check if markdownlint-cli is installed
+  if ! command -v markdownlint &> /dev/null; then
+    echo "⚠️ markdownlint-cli is not installed, attempting to install via Homebrew..."
+    if command -v brew &> /dev/null; then
+      if ! brew install markdownlint-cli; then
+        echo "❌ Failed to install markdownlint-cli, please install it manually before committing"
+        echo "You can install it by running 'brew install markdownlint-cli'"
+        exit 1
+      fi
+    else
+      echo "❌ Homebrew not found, cannot install markdownlint-cli"
+      echo "Please install Homebrew and run 'brew install markdownlint-cli'"
+      exit 1
+    fi
+  fi
+  
+  # Run markdownlint check and save output
+  markdown_output=$(markdownlint "$staged_md_files" 2>&1)
+  if ! markdownlint "$staged_md_files" &> /dev/null; then
+    echo "$markdown_output"
+    echo "❌ markdownlint check failed! Please fix the issues above before committing."
+    echo "Tip: You can use 'markdownlint --fix $staged_md_files' to automatically fix some issues"
+    exit 1
+  fi
+  
+  echo "✅ markdownlint check passed."
+fi
+
+# Part 3: GitHub Actions workflow check with actionlint
+# Get all staged YAML files
+staged_yaml_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(yml|yaml)$")
+
+if [[ -n "$staged_yaml_files" ]]; then
+  echo "Running actionlint check on staged YAML files..."
+  
+  # Check if actionlint is installed
+  if ! command -v actionlint &> /dev/null; then
+    echo "⚠️ actionlint is not installed, attempting to install via Homebrew..."
+    if command -v brew &> /dev/null; then
+      if ! brew install actionlint; then
+        echo "❌ Failed to install actionlint, please install it manually before committing"
+        echo "You can install it by running 'brew install actionlint'"
+        exit 1
+      fi
+    else
+      echo "❌ Homebrew not found, cannot install actionlint"
+      echo "Please install Homebrew and run 'brew install actionlint'"
+      exit 1
+    fi
+  fi
+  
+  # Run actionlint check on each YAML file
+  actionlint_errors=0
+  actionlint_output=""
+  
+  for file in $staged_yaml_files; do
+    echo "Checking YAML file: $file"
+    file_output=$(actionlint "$file" 2>&1)
+    if ! actionlint "$file" &> /dev/null; then
+      actionlint_errors=$((actionlint_errors+1))
+      actionlint_output="$actionlint_output\n$file_output"
+    fi
+  done
+  
+  if [ $actionlint_errors -gt 0 ]; then
+    echo -e "$actionlint_output"
+    echo "❌ YAML check failed! Please fix the issues above before committing."
+    echo "Tip: actionlint provides detailed error messages for GitHub Actions workflow files"
+    exit 1
+  fi
+  
+  echo "✅ YAML check passed."
+fi
+
+# Part 4: AutoCorrect text correction check
+# Get all staged text files (Markdown, text, HTML, etc.)
+staged_text_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(md|markdown|txt|html)$")
+
+if [[ -n "$staged_text_files" ]]; then
+  echo "Running AutoCorrect check on staged text files..."
+  
+  # Check if AutoCorrect is installed
+  if ! command -v autocorrect &> /dev/null; then
+    echo "⚠️ AutoCorrect is not installed, attempting to install via Homebrew..."
+    if command -v brew &> /dev/null; then
+      if ! brew install autocorrect; then
+        echo "❌ Failed to install AutoCorrect, please install it manually before committing"
+        echo "You can install it by running 'brew install autocorrect'"
+        exit 1
+      fi
+    else
+      echo "❌ Homebrew not found, cannot install AutoCorrect"
+      echo "Please install Homebrew and run 'brew install autocorrect'"
+      exit 1
+    fi
+  fi
+  
+  # Run AutoCorrect check
+  autocorrect_errors=0
+  autocorrect_output=""
+  for file in $staged_text_files; do
+    echo "Checking file: $file"
+    file_output=$(autocorrect --lint "$file" 2>&1)
+    if ! autocorrect --lint "$file" &> /dev/null; then
+      autocorrect_errors=$((autocorrect_errors+1))
+      autocorrect_output="$autocorrect_output\n$file_output"
+    fi
+  done
+  
+  if [ $autocorrect_errors -gt 0 ]; then
+    echo -e "$autocorrect_output"
+    echo "❌ AutoCorrect check found issues in $autocorrect_errors files!"
+    echo "Tip: You can use 'autocorrect --fix <filename>' to automatically fix text issues"
+    exit 1
+  fi
+  
+  echo "✅ AutoCorrect check passed."
+fi
+
+# All checks passed
+echo "All checks passed! Proceeding with commit."
+exit 0 
