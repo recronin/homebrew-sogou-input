@@ -3,8 +3,13 @@ name: Update Sogou Input
 
 on:
   schedule:
-    - cron: "0 16 * * *"  # Run every day at 16:00 UTC (00:00 Beijing Time)
-  workflow_dispatch: {}  # Allow manual triggering
+    - cron: "0 16 * * *" # Run every day at 16:00 UTC (00:00 Beijing Time)
+  workflow_dispatch: {} # Allow manual triggering
+
+# Add permissions configuration
+permissions:
+  contents: write
+  packages: read
 
 jobs:
   update-sogou-input:
