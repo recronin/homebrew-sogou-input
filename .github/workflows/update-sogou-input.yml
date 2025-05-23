@@ -76,9 +76,8 @@ jobs:
             brew install --cask recronin/sogou-input/sogou-input
             ```
 
-            > **Note:** Please download the `sogou_input_v${{ env.VERSION }}.zip`
-            > file above. Please DO NOT use the auto-generated "Source code" files
-            > at the bottom.
+            > **Note:** Please download the `sogou_input_v${{ env.VERSION }}.zip` file above.
+            > DO NOT use the auto-generated "Source code" files.
           files: sogou_input_v${{ env.VERSION }}.zip
           generate_release_notes: false
           draft: false
