@@ -9,16 +9,6 @@
 
 这是为 macOS 版搜狗输入法提供的 Homebrew Tap。
 
-## 安装方法
-
-```bash
-# 添加此 tap 到你的 Homebrew
-brew tap recronin/sogou-input
-
-# 安装搜狗输入法
-brew install --cask sogou-input
-```
-
 ## 关于此 Tap
 
 此 tap 为 macOS 上流行的中文输入法——搜狗输入法提供了 Homebrew cask。
@@ -46,13 +36,88 @@ GitHub Action 工作流每天运行以：
 - macOS 10.14 (Mojave) 或更高版本
 - 支持 Intel 和 Apple Silicon (M1/M2/M3) Mac
 
-## 许可证
+## 安装方法
 
-本项目根据此仓库中包含的 LICENSE 文件的条款获得许可。
+```bash
+# 添加此 tap 到你的 Homebrew
+brew tap recronin/sogou-input
 
-## 免责声明
+# 安装搜狗输入法
+brew install --cask sogou-input
+```
 
-搜狗输入法是搜狗公司的产品。此 tap 与搜狗公司没有官方关联。
+## 验证
+
+你可以运行以下命令来验证 cask：
+
+```bash
+# 获取 cask 信息
+brew info --cask sogou-input
+
+# 检查 cask 是否有效
+brew audit --cask sogou-input
+
+# 检查 cask 样式
+brew style --cask sogou-input
+
+# 检查更新
+brew livecheck --cask sogou-input
+```
+
+## 卸载
+
+如果你需要卸载搜狗输入法或移除此 tap：
+
+```bash
+# 卸载搜狗输入法
+brew uninstall --cask sogou-input
+
+# 移除此 tap（可选）
+brew untap recronin/sogou-input
+```
+
+## 开发者相关
+
+### 手动触发工作流更新
+
+如果你需要手动触发更新工作流来发布首个版本或更新到最新版本的搜狗输入法，
+你可以使用 GitHub CLI (`gh`) 工具：
+
+#### 前提条件
+
+你需要安装并认证 GitHub CLI：
+
+```bash
+brew install gh
+```
+
+#### 触发更新工作流
+
+```bash
+# 列出可用的工作流
+gh workflow list
+
+# 触发更新工作流（使用工作流文件名）
+gh workflow run update-sogou-input.yml
+
+# 如果遇到分页器问题，请使用：
+export PAGER=cat && gh workflow run update-sogou-input.yml
+```
+
+#### 监控工作流进度
+
+```bash
+# 列出最近的工作流运行
+gh run list
+
+# 查看特定运行的详情（替换 RUN_ID 为实际 ID）
+gh run view RUN_ID
+
+# 实时监控工作流进度
+gh run watch RUN_ID
+```
+
+你也可以在仓库的 GitHub Actions 标签页上监控工作流执行情况。
 
 ## 故障排除
 
@@ -101,3 +166,11 @@ gh api repos/:owner/:repo/actions/permissions/workflow --jq '.'
 ```
 
 输出应该包含 `"default_workflow_permissions": "write"`。
+
+## 许可证
+
+本项目根据此仓库中包含的 LICENSE 文件的条款获得许可。
+
+## 免责声明
+
+搜狗输入法是搜狗公司的产品。此 tap 与搜狗公司没有官方关联。

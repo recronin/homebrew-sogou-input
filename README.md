@@ -11,16 +11,6 @@
 
 This is a Homebrew Tap for the Sogou Input Method (搜狗输入法) for macOS.
 
-## Installation
-
-```bash
-# Add this tap to your Homebrew
-brew tap recronin/sogou-input
-
-# Install Sogou Input Method
-brew install --cask sogou-input
-```
-
 ## About this Tap
 
 This tap provides a Homebrew cask for Sogou Input Method, a popular Chinese input
@@ -51,15 +41,89 @@ checksum verification.
 - macOS 10.14 (Mojave) or later
 - Intel and Apple Silicon (M1/M2/M3) Mac supported
 
-## License
+## Installation
 
-This project is licensed under the terms of the LICENSE file included in this
-repository.
+```bash
+# Add this tap to your Homebrew
+brew tap recronin/sogou-input
 
-## Disclaimer
+# Install Sogou Input Method
+brew install --cask sogou-input
+```
 
-Sogou Input Method is a product of Sogou Inc. This tap is not officially
-affiliated with Sogou Inc.
+## Verification
+
+You can run the following commands to verify the cask:
+
+```bash
+# Get cask info
+brew info --cask sogou-input
+
+# Check if the cask is valid
+brew audit --cask sogou-input
+
+# Check cask style
+brew style --cask sogou-input
+
+# Check for updates
+brew livecheck --cask sogou-input
+```
+
+## Uninstallation
+
+If you need to uninstall Sogou Input Method or remove this tap:
+
+```bash
+# Uninstall Sogou Input Method
+brew uninstall --cask sogou-input
+
+# Remove this tap (optional)
+brew untap recronin/sogou-input
+```
+
+## For Developers
+
+### Manually Triggering Workflow Updates
+
+If you need to manually trigger the update workflow to release the first version
+or update to the latest version of Sogou Input Method, you can use the GitHub CLI
+(`gh`) tool:
+
+#### Prerequisites
+
+You need GitHub CLI installed and authenticated:
+
+```bash
+brew install gh
+```
+
+#### Trigger the Update Workflow
+
+```bash
+# List available workflows
+gh workflow list
+
+# Trigger the update workflow (using the workflow file name)
+gh workflow run update-sogou-input.yml
+
+# If you encounter pager issues, use:
+export PAGER=cat && gh workflow run update-sogou-input.yml
+```
+
+#### Monitor Workflow Progress
+
+```bash
+# List recent workflow runs
+gh run list
+
+# View details of a specific run (replace RUN_ID with the actual ID)
+gh run view RUN_ID
+
+# Watch workflow progress in real-time
+gh run watch RUN_ID
+```
+
+You can also monitor the workflow execution on the GitHub Actions tab of the repository.
 
 ## Troubleshooting
 
@@ -109,3 +173,13 @@ gh api repos/:owner/:repo/actions/permissions/workflow --jq '.'
 ```
 
 The output should include `"default_workflow_permissions": "write"`.
+
+## License
+
+This project is licensed under the terms of the LICENSE file included in this
+repository.
+
+## Disclaimer
+
+Sogou Input Method is a product of Sogou Inc. This tap is not officially
+affiliated with Sogou Inc.
