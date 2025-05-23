@@ -55,13 +55,18 @@ brew install --cask sogou-input
 brew info --cask sogou-input
 
 # 检查 cask 是否有效
-brew audit --cask sogou-input
+brew audit --cask --online sogou-input
 
 # 检查 cask 样式
 brew style --cask sogou-input
 
 # 检查更新
 brew livecheck --cask sogou-input
+
+# 全面维护
+brew update && brew upgrade && brew upgrade --cask && \
+brew autoremove && brew cleanup --prune=all && \
+brew doctor && brew missing
 ```
 
 ## 卸载

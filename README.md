@@ -60,13 +60,18 @@ You can run the following commands to verify the cask:
 brew info --cask sogou-input
 
 # Check if the cask is valid
-brew audit --cask sogou-input
+brew audit --cask --online sogou-input
 
 # Check cask style
 brew style --cask sogou-input
 
 # Check for updates
 brew livecheck --cask sogou-input
+
+# Full Homebrew Maintenance
+brew update && brew upgrade && brew upgrade --cask && \
+brew autoremove && brew cleanup --prune=all && \
+brew doctor && brew missing
 ```
 
 ## Uninstallation
