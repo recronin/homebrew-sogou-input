@@ -101,7 +101,11 @@ jobs:
             echo -n '  url "https://github.com/'
             echo -n "${REPO_OWNER}/${REPO_NAME}"
             echo -n '/releases/download/'
-            echo 'v#{version}/sogou_input_v#{version}.zip"'
+            echo -n 'v#{version}/sogou_input_v#{version}.zip",'
+            echo ""
+            echo -n '      verified: "github.com/'
+            echo -n "${REPO_OWNER}/${REPO_NAME}"
+            echo '"'
             echo "  name \"Sogou Input Method\""
             echo "  desc \"Chinese input method\""
             echo "  homepage \"https://pinyin.sogou.com/mac/\""
