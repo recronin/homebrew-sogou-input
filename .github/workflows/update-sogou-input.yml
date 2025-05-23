@@ -3,8 +3,8 @@ name: Update Sogou Input
 
 on:
   schedule:
-    - cron: "0 16 * * *" # Run every day at 16:00 UTC (00:00 Beijing Time)
-  workflow_dispatch: {} # Allow manual triggering
+    - cron: "0 16 * * *"  # Run every day at 16:00 UTC (00:00 Beijing Time)
+  workflow_dispatch: {}  # Allow manual triggering
 
 jobs:
   update-sogou-input:
@@ -36,15 +36,15 @@ jobs:
           # Rename the downloaded file to include version number
           mv sogou_input_temp.zip "sogou_input_v${VERSION}.zip"
 
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "SHA256=$SHA256" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "SHA256=$SHA256" >> "$GITHUB_ENV"
 
           # Check if this version already exists
           if git ls-remote --tags origin | grep -q "refs/tags/v$VERSION"; then
             echo "Version $VERSION already exists, skipping release"
-            echo "SKIP_RELEASE=true" >> $GITHUB_ENV
+            echo "SKIP_RELEASE=true" >> "$GITHUB_ENV"
           else
-            echo "SKIP_RELEASE=false" >> $GITHUB_ENV
+            echo "SKIP_RELEASE=false" >> "$GITHUB_ENV"
           fi
 
           # Verify env var is set
@@ -53,7 +53,7 @@ jobs:
       - name: Create release
         if: ${{ env.SKIP_RELEASE != 'true' }}
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
           name: Sogou Input v${{ env.VERSION }}
@@ -90,57 +90,46 @@ jobs:
         if: ${{ env.SKIP_RELEASE != 'true' }}
         run: |
           # Get repository info
-          REPO_OWNER=$(echo $GITHUB_REPOSITORY | cut -d '/' -f 1)
-          REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d '/' -f 2)
+          REPO_OWNER=$(echo "$GITHUB_REPOSITORY" | cut -d '/' -f 1)
+          REPO_NAME=$(echo "$GITHUB_REPOSITORY" | cut -d '/' -f 2)
 
-          # Create file with individual echo commands
-          echo 'cask "sogou-input" do' > Casks/sogou-input.rb
-          echo "  version \"${VERSION}\"" >> Casks/sogou-input.rb
-          echo "  sha256 \"${SHA256}\"" >> Casks/sogou-input.rb
-          echo "" >> Casks/sogou-input.rb
-
-          # Create URL in parts to avoid long lines
-          echo -n '  url "https://github.com/' >> Casks/sogou-input.rb
-          echo -n "${REPO_OWNER}/${REPO_NAME}" >> Casks/sogou-input.rb
-          echo -n '/releases/download/' >> Casks/sogou-input.rb
-          echo 'v#{version}/sogou_input_v#{version}.zip"' >> Casks/sogou-input.rb
-
-          echo "  name \"Sogou Input Method\"" >> Casks/sogou-input.rb
-          echo "  desc \"Chinese input method\"" >> Casks/sogou-input.rb
-          echo "  homepage \"https://pinyin.sogou.com/mac/\"" >> Casks/sogou-input.rb
-          echo "" >> Casks/sogou-input.rb
-          echo "  livecheck do" >> Casks/sogou-input.rb
-
-          # Break long URL into parts
-          echo -n "    url \"https://github.com/" >> Casks/sogou-input.rb
-          echo -n "${REPO_OWNER}/" >> Casks/sogou-input.rb
-          echo "${REPO_NAME}/releases\"" >> Casks/sogou-input.rb
-
-          echo "    regex(/v?(\\d+(?:\\.\\d+)+)/i)" >> Casks/sogou-input.rb
-          echo "  end" >> Casks/sogou-input.rb
-          echo "" >> Casks/sogou-input.rb
-          echo "  auto_updates true" >> Casks/sogou-input.rb
-          echo "  depends_on macos: \">= :mojave\"" >> Casks/sogou-input.rb
-          echo "  depends_on arch: [:x86_64, :arm64]" >> Casks/sogou-input.rb
-          echo "  stage_only true" >> Casks/sogou-input.rb
-          echo "" >> Casks/sogou-input.rb
-          echo "  postflight do" >> Casks/sogou-input.rb
-
-          # Break long line into multiple parts
-          echo -n '    app_path = Dir[' >> Casks/sogou-input.rb
-          echo '"#{staged_path}/sogou*.app"].first' >> Casks/sogou-input.rb
-
-          echo "    if app_path.nil?" >> Casks/sogou-input.rb
-
-          # Break long line into multiple parts
-          echo -n '      puts ' >> Casks/sogou-input.rb
-          echo '"No Sogou app found in #{staged_path}"' >> Casks/sogou-input.rb
-
-          echo "    else" >> Casks/sogou-input.rb
-          echo "      system \"/usr/bin/open\", app_path" >> Casks/sogou-input.rb
-          echo "    end" >> Casks/sogou-input.rb
-          echo "  end" >> Casks/sogou-input.rb
-          echo "end" >> Casks/sogou-input.rb
+          {
+            echo 'cask "sogou-input" do'
+            echo "  version \"${VERSION}\""
+            echo "  sha256 \"${SHA256}\""
+            echo ""
+            echo -n '  url "https://github.com/'
+            echo -n "${REPO_OWNER}/${REPO_NAME}"
+            echo -n '/releases/download/'
+            echo 'v#{version}/sogou_input_v#{version}.zip"'
+            echo "  name \"Sogou Input Method\""
+            echo "  desc \"Chinese input method\""
+            echo "  homepage \"https://pinyin.sogou.com/mac/\""
+            echo ""
+            echo "  livecheck do"
+            echo -n "    url \"https://github.com/"
+            echo -n "${REPO_OWNER}/"
+            echo "${REPO_NAME}/releases\""
+            echo "    regex(/v?(\\d+(?:\\.\\d+)+)/i)"
+            echo "  end"
+            echo ""
+            echo "  auto_updates true"
+            echo "  depends_on macos: \">= :mojave\""
+            echo "  depends_on arch: [:x86_64, :arm64]"
+            echo "  stage_only true"
+            echo ""
+            echo "  postflight do"
+            echo -n '    app_path = Dir['
+            echo '"#{staged_path}/sogou*.app"].first'
+            echo "    if app_path.nil?"
+            echo -n '      puts '
+            echo '"No Sogou app found in #{staged_path}"'
+            echo "    else"
+            echo "      system \"/usr/bin/open\", app_path"
+            echo "    end"
+            echo "  end"
+            echo "end"
+          } > Casks/sogou-input.rb
 
       - name: Commit and push changes
         if: ${{ env.SKIP_RELEASE != 'true' }}
